@@ -1,777 +1,517 @@
-// import { useEffect, useState } from 'react';
-// import axios from 'axios';
-// import Swal from 'sweetalert2';
-// import { Search, Plus, Edit, Trash2, X } from 'lucide-react';
-
-// type MaterialTransactions = {
-//   [materialName: string]: any[];
-// };
-
-// export default function Materials() {
-//   const [transactions, setTransactions] = useState<MaterialTransactions>({});
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [loading, setLoading] = useState(true);
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [entriesPerPage, setEntriesPerPage] = useState(10); // ✅ changed to state
-
-//   // Modal for Add/Edit Entry
-//   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
-//   const [entryModalMode, setEntryModalMode] = useState<'add' | 'edit'>('add');
-//   const [currentMaterial, setCurrentMaterial] = useState('');
-//   const [currentEntryIndex, setCurrentEntryIndex] = useState<number | null>(null);
-//   const [entryFormData, setEntryFormData] = useState<any>({});
-//   const [submitting, setSubmitting] = useState(false);
-
-//   // Modal for Add New Material
-//   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
-//   const [newMaterialName, setNewMaterialName] = useState('');
-//   const [materialSubmitting, setMaterialSubmitting] = useState(false);
-
-//   // Fetch data (replace with your real API)
-//   const fetchTransactions = async () => {
-//     try {
-//       // Replace this with your actual API call
-//       const mockData: MaterialTransactions = {
-//         Sand: [
-//           {
-//             Date: "2026-03-01",
-//             "Supplier Name": "Shree Sand Suppliers",
-//             Rate: 1200,
-//             Amount: 1800000,
-//             Remarks: "Delivered on time"
-//           }
-//         ],
-//         Cement: [
-//           {
-//             Date: "2026-03-03",
-//             "Supplier Name": "ABC Traders",
-//             Rate: 380,
-//             Amount: 190000,
-//             Remarks: "Batch OK"
-//           }
-//         ],
-//       };
-//       setTransactions(mockData);
-//     } catch (err) {
-//       Swal.fire('Error', 'Failed to load data', 'error');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchTransactions();
-//   }, []);
-
-//   // Flatten all entries for table display
-//   const allEntries = Object.entries(transactions).flatMap(([material, entries]) =>
-//     entries.map((entry, idx) => ({
-//       material,
-//       entryIndex: idx,
-//       ...entry,
-//     }))
-//   );
-
-//   // Search filter
-//   const filteredEntries = allEntries.filter((entry) =>
-//     entry.material.toLowerCase().includes(searchTerm.toLowerCase())
-//   );
-
-//   // Pagination
-//   const totalEntries = filteredEntries.length;
-//   const totalPages = Math.ceil(totalEntries / entriesPerPage);
-//   const startIndex = (currentPage - 1) * entriesPerPage;
-//   const paginatedEntries = filteredEntries.slice(startIndex, startIndex + entriesPerPage);
-
-//   // When filter or entriesPerPage changes, reset to page 1
-//   useEffect(() => {
-//     setCurrentPage(1);
-//   }, [searchTerm, entriesPerPage]);
-
-//   // Determine all possible column keys from all entries (for dynamic table)
-//   const allKeys = Array.from(
-//     new Set(allEntries.flatMap(entry => Object.keys(entry).filter(k => k !== 'material' && k !== 'entryIndex')))
-//   );
-
-//   // Helper: open modal to add a new entry for a material
-//   const openAddEntryModal = (material: string) => {
-//     setCurrentMaterial(material);
-//     setEntryModalMode('add');
-//     setCurrentEntryIndex(null);
-//     const template = transactions[material]?.[0] || {};
-//     const emptyEntry: any = {};
-//     Object.keys(template).forEach(key => { emptyEntry[key] = ''; });
-//     if (Object.keys(emptyEntry).length === 0) emptyEntry['Date'] = '';
-//     setEntryFormData(emptyEntry);
-//     setIsEntryModalOpen(true);
-//   };
-
-//   const openEditEntryModal = (material: string, index: number, entry: any) => {
-//     setCurrentMaterial(material);
-//     setEntryModalMode('edit');
-//     setCurrentEntryIndex(index);
-//     setEntryFormData({ ...entry });
-//     setIsEntryModalOpen(true);
-//   };
-
-//   const handleEntrySubmit = async () => {
-//     if (!entryFormData.Date) {
-//       Swal.fire('Error', 'Date is required', 'error');
-//       return;
-//     }
-//     if (!entryFormData['Supplier Name']) {
-//       Swal.fire('Error', 'Supplier Name is required', 'error');
-//       return;
-//     }
-//     if (entryFormData.Rate !== undefined && entryFormData.Rate !== '') {
-//       if (isNaN(Number(entryFormData.Rate))) {
-//         Swal.fire('Error', 'Rate must be a number', 'error');
-//         return;
-//       }
-//       entryFormData.Rate = Number(entryFormData.Rate);
-//     }
-//     if (entryFormData.Amount !== undefined && entryFormData.Amount !== '') {
-//       if (isNaN(Number(entryFormData.Amount))) {
-//         Swal.fire('Error', 'Amount must be a number', 'error');
-//         return;
-//       }
-//       entryFormData.Amount = Number(entryFormData.Amount);
-//     }
-
-//     setSubmitting(true);
-//     try {
-//       const updated = { ...transactions };
-//       if (entryModalMode === 'add') {
-//         if (!updated[currentMaterial]) updated[currentMaterial] = [];
-//         updated[currentMaterial].push(entryFormData);
-//       } else {
-//         if (currentEntryIndex !== null) {
-//           updated[currentMaterial][currentEntryIndex] = entryFormData;
-//         }
-//       }
-//       setTransactions(updated);
-//       Swal.fire('Success', `Entry ${entryModalMode === 'add' ? 'added' : 'updated'}`, 'success');
-//       setIsEntryModalOpen(false);
-//     } catch (err: any) {
-//       Swal.fire('Error', err.response?.data?.message || 'Operation failed', 'error');
-//     } finally {
-//       setSubmitting(false);
-//     }
-//   };
-
-//   const handleDeleteEntry = async (material: string, index: number) => {
-//     const confirm = await Swal.fire({
-//       title: 'Delete this entry?',
-//       text: 'This action cannot be undone',
-//       icon: 'warning',
-//       showCancelButton: true,
-//       confirmButtonColor: '#d33',
-//       confirmButtonText: 'Yes, delete',
-//     });
-//     if (!confirm.isConfirmed) return;
-
-//     try {
-//       const updated = { ...transactions };
-//       updated[material].splice(index, 1);
-//       if (updated[material].length === 0) delete updated[material];
-//       setTransactions(updated);
-//       Swal.fire('Deleted', 'Entry removed', 'success');
-//     } catch (err: any) {
-//       Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error');
-//     }
-//   };
-
-//   const handleAddMaterial = async () => {
-//     if (!newMaterialName.trim()) {
-//       Swal.fire('Error', 'Material name is required', 'error');
-//       return;
-//     }
-//     if (transactions[newMaterialName]) {
-//       Swal.fire('Error', 'Material already exists', 'error');
-//       return;
-//     }
-//     setMaterialSubmitting(true);
-//     try {
-//       const updated = { ...transactions, [newMaterialName]: [] };
-//       setTransactions(updated);
-//       Swal.fire('Success', `Material "${newMaterialName}" added`, 'success');
-//       setIsMaterialModalOpen(false);
-//       setNewMaterialName('');
-//     } catch (err: any) {
-//       Swal.fire('Error', err.response?.data?.message || 'Failed to add material', 'error');
-//     } finally {
-//       setMaterialSubmitting(false);
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex justify-center items-center h-64">
-//         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-//       </div>
-//     );
-//   }
-
-//   const formatValue = (value: any) => {
-//     if (typeof value === 'number') return value.toLocaleString();
-//     return value !== undefined && value !== null ? value : '-';
-//   };
-
-//   return (
-//     <div className="space-y-6 px-4 sm:px-0">
-//       {/* Page Header */}
-//       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-//         <div>
-//           <h1 className="text-2xl font-bold text-gray-800">Materials Inventory</h1>
-//           <p className="text-sm text-gray-500 mt-1">Manage material transactions and entries</p>
-//         </div>
-//         <button
-//           onClick={() => setIsMaterialModalOpen(true)}
-//           className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition w-full sm:w-auto"
-//         >
-//           <Plus size={18} />
-//           Add Material
-//         </button>
-//       </div>
-
-//       {/* Main Card */}
-//       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-//         {/* Table Controls */}
-//         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b border-gray-200 bg-gray-50">
-//           <div className="flex items-center gap-2 text-sm text-gray-600">
-//             <span>Show</span>
-//             <select
-//               className="border rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-//               value={entriesPerPage}
-//               onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-//             >
-//               <option value={10}>10</option>
-//               <option value={25}>25</option>
-//               <option value={50}>50</option>
-//               <option value={100}>100</option>
-//             </select>
-//             <span>entries</span>
-//           </div>
-
-//           <div className="relative w-full sm:w-64">
-//             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//             <input
-//               type="text"
-//               placeholder="Search material..."
-//               className="w-full border rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-//               value={searchTerm}
-//               onChange={(e) => setSearchTerm(e.target.value)}
-//             />
-//           </div>
-//         </div>
-
-//         {/* Table */}
-//         <div className="overflow-x-auto">
-//           <table className="min-w-[800px] w-full text-sm">
-//             <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-200">
-//               <tr>
-//                 <th className="px-6 py-3 text-left">Material</th>
-//                 {allKeys.map((key) => (
-//                   <th key={key} className="px-6 py-3 text-left">{key}</th>
-//                 ))}
-//                 <th className="px-6 py-3 text-right">Actions</th>
-//               </tr>
-//             </thead>
-//             <tbody className="divide-y divide-gray-100">
-//               {paginatedEntries.length === 0 ? (
-//                 <td>
-//                   <td colSpan={allKeys.length + 2} className="text-center py-16 text-gray-400">
-//                     No entries found.
-//                   </td>
-//                 </td>
-//               ) : (
-//                 paginatedEntries.map((entry, idx) => (
-//                   <tr key={`${entry.material}-${idx}`} className="hover:bg-gray-50 transition">
-//                     <td className="px-6 py-3 font-medium text-gray-900">{entry.material}</td>
-//                     {allKeys.map((key) => (
-//                       <td key={key} className="px-6 py-3 text-gray-700">
-//                         {formatValue(entry[key])}
-//                       </td>
-//                     ))}
-//                     <td className="px-6 py-3 text-right whitespace-nowrap">
-//                       <button
-//                         onClick={() => openAddEntryModal(entry.material)}
-//                         className="text-green-600 hover:text-green-800 mr-2 transition"
-//                         title="Add entry"
-//                       >
-//                         <Plus size={16} />
-//                       </button>
-//                       <button
-//                         onClick={() => openEditEntryModal(entry.material, entry.entryIndex, entry)}
-//                         className="text-blue-600 hover:text-blue-800 mr-2 transition"
-//                       >
-//                         <Edit size={16} />
-//                       </button>
-//                       <button
-//                         onClick={() => handleDeleteEntry(entry.material, entry.entryIndex)}
-//                         className="text-red-600 hover:text-red-800 transition"
-//                       >
-//                         <Trash2 size={16} />
-//                       </button>
-//                     </td>
-//                   </tr>
-//                 ))
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-
-//         {/* Pagination Footer */}
-//         {totalEntries > 0 && (
-//           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-t border-gray-200 text-sm text-gray-500 bg-gray-50">
-//             <div>
-//               Showing {startIndex + 1} to {Math.min(startIndex + entriesPerPage, totalEntries)} of {totalEntries} results
-//             </div>
-//             <div className="flex items-center gap-2">
-//               <button
-//                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-//                 disabled={currentPage === 1}
-//                 className="border px-2 py-1 rounded disabled:opacity-50 bg-white hover:bg-gray-100 transition"
-//               >
-//                 ‹
-//               </button>
-//               <span className="px-3 py-1 bg-blue-600 text-white rounded">{currentPage}</span>
-//               <button
-//                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-//                 disabled={currentPage === totalPages || totalPages === 0}
-//                 className="border px-2 py-1 rounded disabled:opacity-50 bg-white hover:bg-gray-100 transition"
-//               >
-//                 ›
-//               </button>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-
-//       {/* Modal: Add/Edit Entry */}
-//       {isEntryModalOpen && (
-//         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-//           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 relative">
-//             <button
-//               onClick={() => setIsEntryModalOpen(false)}
-//               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-//             >
-//               <X size={24} />
-//             </button>
-//             <h2 className="text-xl font-bold mb-4">
-//               {entryModalMode === 'add' ? `Add Entry for ${currentMaterial}` : `Edit Entry for ${currentMaterial}`}
-//             </h2>
-//             <div className="space-y-4">
-//               {Object.keys(entryFormData).map((field) => (
-//                 <div key={field}>
-//                   <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
-//                   <input
-//                     type={field === 'Date' ? 'date' : (field === 'Rate' || field === 'Amount' ? 'number' : 'text')}
-//                     value={entryFormData[field] ?? ''}
-//                     onChange={(e) =>
-//                       setEntryFormData({
-//                         ...entryFormData,
-//                         [field]: field === 'Date' ? e.target.value : (field === 'Rate' || field === 'Amount' ? parseFloat(e.target.value) || 0 : e.target.value),
-//                       })
-//                     }
-//                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                     step={field === 'Rate' || field === 'Amount' ? 'any' : '1'}
-//                   />
-//                 </div>
-//               ))}
-//             </div>
-//             <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-//               <button
-//                 onClick={() => setIsEntryModalOpen(false)}
-//                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition order-2 sm:order-1"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 onClick={handleEntrySubmit}
-//                 disabled={submitting}
-//                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition order-1 sm:order-2"
-//               >
-//                 {submitting ? 'Saving...' : 'Save Entry'}
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Modal: Add New Material */}
-//       {isMaterialModalOpen && (
-//         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-//           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
-//             <button
-//               onClick={() => setIsMaterialModalOpen(false)}
-//               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-//             >
-//               <X size={24} />
-//             </button>
-//             <h2 className="text-xl font-bold mb-4">Add New Material</h2>
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-1">Material Name</label>
-//               <input
-//                 type="text"
-//                 value={newMaterialName}
-//                 onChange={(e) => setNewMaterialName(e.target.value)}
-//                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                 placeholder="e.g., Sand, Cement, Steel"
-//                 autoFocus
-//               />
-//             </div>
-//             <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-//               <button
-//                 onClick={() => setIsMaterialModalOpen(false)}
-//                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition order-2 sm:order-1"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 onClick={handleAddMaterial}
-//                 disabled={materialSubmitting}
-//                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition order-1 sm:order-2"
-//               >
-//                 {materialSubmitting ? 'Adding...' : 'Add Material'}
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { Search, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Plus, X, Package, Hash, Edit, Trash2 } from 'lucide-react';
+import ProjectDropdown from '../components/ProjectDropdown';
 
-type MaterialTransactions = {
-  [materialName: string]: any[];
-};
+interface MaterialEntry {
+  Date: string;
+  'Supplier Name': string;
+  Quantity: number;
+  Amount: number;
+  projectId?: string;
+  projectName?: string;
+  _id: string;
+}
+
+interface MaterialSummary {
+  name: string;
+  totalRecords: number;
+}
 
 export default function Materials() {
-  const [transactions, setTransactions] = useState<MaterialTransactions>({});
-  const [searchTerm, setSearchTerm] = useState('');
+  const [materialSummaries, setMaterialSummaries] = useState<MaterialSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [error, setError] = useState<string | null>(null);
 
-  const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
-  const [entryModalMode, setEntryModalMode] = useState<'add' | 'edit'>('add');
-  const [currentMaterial, setCurrentMaterial] = useState('');
-  const [currentEntryIndex, setCurrentEntryIndex] = useState<number | null>(null);
-  const [entryFormData, setEntryFormData] = useState<any>({});
-  const [submitting, setSubmitting] = useState(false);
-
-  const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  // New material modal state
+  const [showAddMaterialModal, setShowAddMaterialModal] = useState(false);
   const [newMaterialName, setNewMaterialName] = useState('');
-  const [materialSubmitting, setMaterialSubmitting] = useState(false);
+  const [submittingMaterial, setSubmittingMaterial] = useState(false);
 
-  const fetchTransactions = async () => {
+  // Edit material modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<MaterialSummary | null>(null);
+  const [editMaterialName, setEditMaterialName] = useState('');
+  const [submittingEdit, setSubmittingEdit] = useState(false);
+
+  // Add record modal state
+  const [showAddRecordModal, setShowAddRecordModal] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<MaterialSummary | null>(null);
+  const [submittingRecord, setSubmittingRecord] = useState(false);
+  const [recordForm, setRecordForm] = useState({
+    projectId: '',
+    Date: new Date().toISOString().split('T')[0],
+    supplierName: '',
+    quantity: '',
+    rate: '',
+    remarks: '',
+  });
+
+  // Fetch materials
+  const fetchMaterials = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Replace with your actual API call
-      const mockData: MaterialTransactions = {
-        Sand: [{ Date: "2026-03-01", "Supplier Name": "Shree Sand Suppliers", Rate: 1200, Amount: 1800000, Remarks: "Delivered on time" }],
-        Cement: [{ Date: "2026-03-03", "Supplier Name": "ABC Traders", Rate: 380, Amount: 190000, Remarks: "Batch OK" }],
-      };
-      setTransactions(mockData);
-    } catch (err) {
-      Swal.fire('Error', 'Failed to load data', 'error');
+      const res = await axios.get<Record<string, MaterialEntry[]>>('/api/materials', {
+        withCredentials: true,
+      });
+      const data = res.data;
+
+      const summaries: MaterialSummary[] = Object.entries(data).map(([name, entries]) => {
+        const realEntries = entries.filter((e) => e['Supplier Name'] !== 'Initial Stock');
+        return {
+          name,
+          totalRecords: realEntries.length,
+        };
+      });
+      summaries.sort((a, b) => a.name.localeCompare(b.name));
+      setMaterialSummaries(summaries);
+    } catch (err: any) {
+      console.error('Failed to load materials:', err);
+      setError(err?.response?.data?.message || 'Unable to load materials.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchTransactions(); }, []);
+  useEffect(() => {
+    fetchMaterials();
+  }, []);
 
-  const allEntries = Object.entries(transactions).flatMap(([material, entries]) =>
-    entries.map((entry, idx) => ({ material, entryIndex: idx, ...entry }))
-  );
-
-  const filteredEntries = allEntries.filter((entry) =>
-    entry.material.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalEntries = filteredEntries.length;
-  const totalPages = Math.ceil(totalEntries / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const paginatedEntries = filteredEntries.slice(startIndex, startIndex + entriesPerPage);
-
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, entriesPerPage]);
-
-  const allKeys = Array.from(
-    new Set(allEntries.flatMap(entry => Object.keys(entry).filter(k => k !== 'material' && k !== 'entryIndex')))
-  );
-
-  const openAddEntryModal = (material: string) => {
-    setCurrentMaterial(material);
-    setEntryModalMode('add');
-    setCurrentEntryIndex(null);
-    const template = transactions[material]?.[0] || {};
-    const emptyEntry: any = {};
-    Object.keys(template).forEach(key => { emptyEntry[key] = ''; });
-    if (Object.keys(emptyEntry).length === 0) emptyEntry['Date'] = '';
-    setEntryFormData(emptyEntry);
-    setIsEntryModalOpen(true);
-  };
-
-  const openEditEntryModal = (material: string, index: number, entry: any) => {
-    setCurrentMaterial(material);
-    setEntryModalMode('edit');
-    setCurrentEntryIndex(index);
-    setEntryFormData({ ...entry });
-    setIsEntryModalOpen(true);
-  };
-
-  const handleEntrySubmit = async () => {
-    if (!entryFormData.Date) { Swal.fire('Error', 'Date is required', 'error'); return; }
-    if (!entryFormData['Supplier Name']) { Swal.fire('Error', 'Supplier Name is required', 'error'); return; }
-    if (entryFormData.Rate !== undefined && entryFormData.Rate !== '') {
-      if (isNaN(Number(entryFormData.Rate))) { Swal.fire('Error', 'Rate must be a number', 'error'); return; }
-      entryFormData.Rate = Number(entryFormData.Rate);
-    }
-    if (entryFormData.Amount !== undefined && entryFormData.Amount !== '') {
-      if (isNaN(Number(entryFormData.Amount))) { Swal.fire('Error', 'Amount must be a number', 'error'); return; }
-      entryFormData.Amount = Number(entryFormData.Amount);
+  // Add new material category
+  const handleAddMaterial = async () => {
+    const trimmedName = newMaterialName.trim();
+    if (!trimmedName) {
+      Swal.fire('Validation Error', 'Material name is required', 'warning');
+      return;
     }
 
-    setSubmitting(true);
-    try {
-      const updated = { ...transactions };
-      if (entryModalMode === 'add') {
-        if (!updated[currentMaterial]) updated[currentMaterial] = [];
-        updated[currentMaterial].push(entryFormData);
-      } else {
-        if (currentEntryIndex !== null) updated[currentMaterial][currentEntryIndex] = entryFormData;
+    let projectId = localStorage.getItem('selectedProjectId');
+    if (!projectId) {
+      try {
+        const projectsRes = await axios.get('/api/projects', { withCredentials: true });
+        const projects = projectsRes.data;
+        if (projects.length === 0) {
+          Swal.fire('No Project', 'Please create a project first.', 'warning');
+          return;
+        }
+        projectId = projects[0]._id;
+        localStorage.setItem('selectedProjectId', projectId);
+      } catch (err) {
+        Swal.fire('Error', 'Could not fetch projects.', 'error');
+        return;
       }
-      setTransactions(updated);
-      Swal.fire('Success', `Entry ${entryModalMode === 'add' ? 'added' : 'updated'}`, 'success');
-      setIsEntryModalOpen(false);
+    }
+
+    setSubmittingMaterial(true);
+    try {
+      await axios.post(
+        '/api/materials',
+        {
+          materialName: trimmedName,
+          projectId,
+          entry: {
+            projectId,
+            Date: new Date().toISOString().split('T')[0],
+            'Supplier Name': 'Initial Stock',
+            Quantity: 0,
+            Rate: 0,
+            Amount: 0,
+            Remarks: 'Initial material creation',
+          },
+        },
+        { withCredentials: true }
+      );
+      Swal.fire('Success', `Material "${trimmedName}" added.`, 'success');
+      setShowAddMaterialModal(false);
+      setNewMaterialName('');
+      fetchMaterials();
     } catch (err: any) {
-      Swal.fire('Error', err.response?.data?.message || 'Operation failed', 'error');
+      Swal.fire('Error', err.response?.data?.message || 'Failed to add material', 'error');
     } finally {
-      setSubmitting(false);
+      setSubmittingMaterial(false);
     }
   };
 
-  const handleDeleteEntry = async (material: string, index: number) => {
-    const confirm = await Swal.fire({ title: 'Delete this entry?', text: 'This action cannot be undone', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Yes, delete' });
-    if (!confirm.isConfirmed) return;
+  // Edit material
+  const openEditModal = (material: MaterialSummary) => {
+    setEditingMaterial(material);
+    setEditMaterialName(material.name);
+    setShowEditModal(true);
+  };
+
+  const handleEditMaterial = async () => {
+    const newName = editMaterialName.trim();
+    if (!newName) {
+      Swal.fire('Validation Error', 'Material name cannot be empty', 'warning');
+      return;
+    }
+    if (newName === editingMaterial?.name) {
+      Swal.fire('Info', 'Name unchanged', 'info');
+      setShowEditModal(false);
+      return;
+    }
+
+    setSubmittingEdit(true);
     try {
-      const updated = { ...transactions };
-      updated[material].splice(index, 1);
-      if (updated[material].length === 0) delete updated[material];
-      setTransactions(updated);
-      Swal.fire('Deleted', 'Entry removed', 'success');
+      await axios.put(
+        `/api/materials/material/${encodeURIComponent(editingMaterial!.name)}`,
+        { newName },
+        { withCredentials: true }
+      );
+      Swal.fire('Success', 'Material renamed', 'success');
+      setShowEditModal(false);
+      fetchMaterials();
+    } catch (err: any) {
+      Swal.fire('Error', err.response?.data?.message || 'Rename failed', 'error');
+    } finally {
+      setSubmittingEdit(false);
+    }
+  };
+
+  // Delete material
+  const handleDeleteMaterial = async (material: MaterialSummary) => {
+    const confirm = await Swal.fire({
+      title: `Delete "${material.name}"?`,
+      text: 'This will delete ALL records for this material. This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete',
+    });
+    if (!confirm.isConfirmed) return;
+
+    try {
+      await axios.delete(`/api/materials/material/${encodeURIComponent(material.name)}`, {
+        withCredentials: true,
+      });
+      Swal.fire('Deleted', `Material "${material.name}" removed.`, 'success');
+      fetchMaterials();
     } catch (err: any) {
       Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error');
     }
   };
 
-  const handleAddMaterial = async () => {
-    if (!newMaterialName.trim()) { Swal.fire('Error', 'Material name is required', 'error'); return; }
-    if (transactions[newMaterialName]) { Swal.fire('Error', 'Material already exists', 'error'); return; }
-    setMaterialSubmitting(true);
+  // Add record for material
+  const openAddRecordModal = (material: MaterialSummary) => {
+    setSelectedMaterial(material);
+    setRecordForm({
+      projectId: localStorage.getItem('selectedProjectId') || '',
+      Date: new Date().toISOString().split('T')[0],
+      supplierName: '',
+      quantity: '',
+      rate: '',
+      remarks: '',
+    });
+    setShowAddRecordModal(true);
+  };
+
+  const handleAddRecord = async () => {
+    const quantity = Number(recordForm.quantity);
+    const rate = Number(recordForm.rate);
+
+    if (!recordForm.projectId) {
+      Swal.fire('Validation Error', 'Project name is required', 'warning');
+      return;
+    }
+    if (!recordForm.Date || !recordForm.supplierName.trim() || quantity <= 0 || rate <= 0) {
+      Swal.fire('Validation Error', 'Please fill all required fields correctly', 'warning');
+      return;
+    }
+
+    setSubmittingRecord(true);
     try {
-      const updated = { ...transactions, [newMaterialName]: [] };
-      setTransactions(updated);
-      Swal.fire('Success', `Material "${newMaterialName}" added`, 'success');
-      setIsMaterialModalOpen(false);
-      setNewMaterialName('');
+      await axios.post(
+        '/api/materials',
+        {
+          materialName: selectedMaterial!.name,
+          projectId: recordForm.projectId,
+          entry: {
+            projectId: recordForm.projectId,
+            Date: recordForm.Date,
+            'Supplier Name': recordForm.supplierName.trim(),
+            Quantity: quantity,
+            Rate: rate,
+            Amount: quantity * rate,
+            Remarks: recordForm.remarks.trim(),
+          },
+        },
+        { withCredentials: true }
+      );
+      Swal.fire('Success', 'Record added successfully', 'success');
+      setShowAddRecordModal(false);
+      fetchMaterials();
     } catch (err: any) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to add material', 'error');
+      Swal.fire('Error', err.response?.data?.message || 'Failed to add record', 'error');
     } finally {
-      setMaterialSubmitting(false);
+      setSubmittingRecord(false);
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
-  const formatValue = (value: any) => {
-    if (typeof value === 'number') return value.toLocaleString();
-    return value !== undefined && value !== null ? value : '-';
-  };
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+        <p className="text-red-600">{error}</p>
+        <button onClick={fetchMaterials} className="mt-4 bg-red-600 text-white px-4 py-2 rounded">
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden px-4 sm:px-6 lg:px-8">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Materials Inventory</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage material transactions and entries</p>
-          </div>
-          <button
-            onClick={() => setIsMaterialModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition w-full sm:w-auto"
-          >
-            <Plus size={18} /> Add Material
-          </button>
-        </div>
-
-        {/* Main Card */}
-        <div className="bg-white rounded-xl shadow-md">
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="whitespace-nowrap">Show</span>
-              <select
-                className="border rounded px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                value={entriesPerPage}
-                onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-              <span className="whitespace-nowrap">entries</span>
-            </div>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search material..."
-                className="w-full border rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Table – horizontal scroll on small screens */}
-          <div className="overflow-x-auto">
-            <div className="inline-block min-w-full align-middle">
-              <table className="min-w-[800px] w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-200">
-                  <tr>
-                    <th className="px-4 sm:px-6 py-3 text-left">Material</th>
-                    {allKeys.map((key) => (
-                      <th key={key} className="px-4 sm:px-6 py-3 text-left whitespace-nowrap">{key}</th>
-                    ))}
-                    <th className="px-4 sm:px-6 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {paginatedEntries.length === 0 ? (
-                    <tr>
-                      <td colSpan={allKeys.length + 2} className="text-center py-16 text-gray-400">
-                        No entries found.
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedEntries.map((entry, idx) => (
-                      <tr key={`${entry.material}-${idx}`} className="hover:bg-gray-50 transition">
-                        <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 whitespace-nowrap">{entry.material}</td>
-                        {allKeys.map((key) => (
-                          <td key={key} className="px-4 sm:px-6 py-3 text-gray-700 whitespace-nowrap">
-                            {formatValue(entry[key])}
-                          </td>
-                        ))}
-                        <td className="px-4 sm:px-6 py-3 text-right whitespace-nowrap">
-                          <button onClick={() => openAddEntryModal(entry.material)} className="text-green-600 hover:text-green-800 mr-2 transition">
-                            <Plus size={16} />
-                          </button>
-                          <button onClick={() => openEditEntryModal(entry.material, entry.entryIndex, entry)} className="text-blue-600 hover:text-blue-800 mr-2 transition">
-                            <Edit size={16} />
-                          </button>
-                          <button onClick={() => handleDeleteEntry(entry.material, entry.entryIndex)} className="text-red-600 hover:text-red-800 transition">
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Pagination Footer */}
-          {totalEntries > 0 && (
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-t border-gray-200 text-sm text-gray-500 bg-gray-50">
-              <div>
-                Showing {startIndex + 1} to {Math.min(startIndex + entriesPerPage, totalEntries)} of {totalEntries} results
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="border px-2 py-1 rounded disabled:opacity-50 bg-white hover:bg-gray-100 transition"
-                >
-                  ‹
-                </button>
-                <span className="px-3 py-1 bg-blue-600 text-white rounded">{currentPage}</span>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className="border px-2 py-1 rounded disabled:opacity-50 bg-white hover:bg-gray-100 transition"
-                >
-                  ›
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Materials</h1>
+        <button
+          onClick={() => setShowAddMaterialModal(true)}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm"
+        >
+          <Plus size={18} />
+          New Material
+        </button>
       </div>
 
-      {/* Modal: Add/Edit Entry */}
-      {isEntryModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-800">{entryModalMode === 'add' ? `Add Entry for ${currentMaterial}` : `Edit Entry for ${currentMaterial}`}</h2>
-              <button onClick={() => setIsEntryModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition"><X size={24} /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              {Object.keys(entryFormData).map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">{field}</label>
-                  <input
-                    type={field === 'Date' ? 'date' : (field === 'Rate' || field === 'Amount' ? 'number' : 'text')}
-                    value={entryFormData[field] ?? ''}
-                    onChange={(e) => setEntryFormData({ ...entryFormData, [field]: field === 'Date' ? e.target.value : (field === 'Rate' || field === 'Amount' ? parseFloat(e.target.value) || 0 : e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    step={field === 'Rate' || field === 'Amount' ? 'any' : '1'}
-                  />
+      {/* Material Cards Grid */}
+      {materialSummaries.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+          <Package size={48} className="mx-auto text-gray-300 mb-4" />
+          <p className="text-gray-500">No materials found</p>
+          <p className="text-gray-400 text-sm mt-1">Click "New Material" to create one.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {materialSummaries.map((material) => (
+            <div
+              key={material.name}
+              className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition p-5 flex flex-col"
+            >
+              {/* Material name and icons row */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <Package size={20} className="text-blue-500" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 text-lg truncate">
+                    {material.name}
+                  </h3>
                 </div>
-              ))}
+                <div className="flex items-center gap-1 ml-2">
+                  <button
+                    onClick={() => openEditModal(material)}
+                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    title="Edit material"
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMaterial(material)}
+                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                    title="Delete material"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Total Records */}
+              <div className="flex items-center justify-between text-sm mb-4">
+                <span className="text-gray-500 flex items-center gap-1">
+                  <Hash size={14} /> Total Records
+                </span>
+                <span className="font-medium text-gray-700">{material.totalRecords}</span>
+              </div>
+
+              {/* Add Record Button */}
+              <button
+                onClick={() => openAddRecordModal(material)}
+                className="mt-auto w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg transition"
+              >
+                <Plus size={16} />
+                Add Record
+              </button>
             </div>
-            <div className="flex flex-col sm:flex-row justify-end gap-3 p-6 border-t border-gray-200">
-              <button onClick={() => setIsEntryModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition order-2 sm:order-1">Cancel</button>
-              <button onClick={handleEntrySubmit} disabled={submitting} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition order-1 sm:order-2">{submitting ? 'Saving...' : 'Save Entry'}</button>
+          ))}
+        </div>
+      )}
+
+      {/* New Material Modal */}
+      {showAddMaterialModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowAddMaterialModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-xl font-bold mb-4">New Material</h2>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Material Name *
+              </label>
+              <input
+                type="text"
+                value={newMaterialName}
+                onChange={(e) => setNewMaterialName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddMaterial()}
+                placeholder="e.g., Cement, Steel, Sand"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowAddMaterialModal(false)} className="border px-4 py-2 rounded-lg">
+                Cancel
+              </button>
+              <button
+                onClick={handleAddMaterial}
+                disabled={submittingMaterial}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+              >
+                {submittingMaterial ? 'Adding...' : 'Add Material'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal: Add New Material */}
-      {isMaterialModalOpen && (
+      {/* Edit Material Modal */}
+      {showEditModal && editingMaterial && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full relative">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-800">Add New Material</h2>
-              <button onClick={() => setIsMaterialModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition"><X size={24} /></button>
-            </div>
-            <div className="p-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Material Name *</label>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-xl font-bold mb-4">Edit Material</h2>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Material Name *
+              </label>
               <input
                 type="text"
-                value={newMaterialName}
-                onChange={(e) => setNewMaterialName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                placeholder="e.g., Sand, Cement, Steel"
+                value={editMaterialName}
+                onChange={(e) => setEditMaterialName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleEditMaterial()}
+                placeholder="Material name"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
               />
             </div>
-            <div className="flex flex-col sm:flex-row justify-end gap-3 p-6 border-t border-gray-200">
-              <button onClick={() => setIsMaterialModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition order-2 sm:order-1">Cancel</button>
-              <button onClick={handleAddMaterial} disabled={materialSubmitting} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition order-1 sm:order-2">{materialSubmitting ? 'Adding...' : 'Add Material'}</button>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowEditModal(false)} className="border px-4 py-2 rounded-lg">
+                Cancel
+              </button>
+              <button
+                onClick={handleEditMaterial}
+                disabled={submittingEdit}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+              >
+                {submittingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Record Modal */}
+      {showAddRecordModal && selectedMaterial && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
+            <button
+              onClick={() => setShowAddRecordModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-xl font-bold mb-4">Add Transaction for {selectedMaterial.name}</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Project Name *</label>
+                <ProjectDropdown
+                  value={recordForm.projectId}
+                  onChange={(pid) => setRecordForm({ ...recordForm, projectId: pid })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Date *</label>
+                <input
+                  type="date"
+                  value={recordForm.Date}
+                  onChange={(e) => setRecordForm({ ...recordForm, Date: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Supplier Name *</label>
+                <input
+                  type="text"
+                  value={recordForm.supplierName}
+                  onChange={(e) => setRecordForm({ ...recordForm, supplierName: e.target.value })}
+                  placeholder="e.g., ABC Traders"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">Quantity *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={recordForm.quantity}
+                    onChange={(e) => setRecordForm({ ...recordForm, quantity: e.target.value })}
+                    placeholder="e.g., 100"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">Rate (₹) *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={recordForm.rate}
+                    onChange={(e) => setRecordForm({ ...recordForm, rate: e.target.value })}
+                    placeholder="e.g., 500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Remarks</label>
+                <textarea
+                  rows={2}
+                  value={recordForm.remarks}
+                  onChange={(e) => setRecordForm({ ...recordForm, remarks: e.target.value })}
+                  placeholder="Optional"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowAddRecordModal(false)} className="border px-4 py-2 rounded-lg">
+                Cancel
+              </button>
+              <button
+                onClick={handleAddRecord}
+                disabled={submittingRecord}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+              >
+                {submittingRecord ? 'Adding...' : 'Add Record'}
+              </button>
             </div>
           </div>
         </div>

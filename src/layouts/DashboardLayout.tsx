@@ -71,13 +71,13 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  // ✅ AUTO HANDLE SCREEN SIZE
+  // Auto handle screen size for sidebar visibility
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        setSidebarOpen(true); // always open on laptop
+        setSidebarOpen(true); // Always open on desktop
       } else {
-        setSidebarOpen(false); // hidden on tablet/mobile
+        setSidebarOpen(false); // Hidden on tablet/mobile by default
       }
     };
 
@@ -88,7 +88,7 @@ export default function DashboardLayout() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen w-screen bg-gray-50 overflow-hidden">
 
       {/* Sidebar */}
       <Sidebar
@@ -98,16 +98,18 @@ export default function DashboardLayout() {
         setCollapsed={setCollapsed}
       />
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div
         className={`
-          flex-1 flex flex-col transition-all duration-300
+          flex-1 flex flex-col transition-all duration-300 overflow-hidden
           ${collapsed ? 'lg:ml-20' : 'lg:ml-64'}
         `}
       >
+        {/* Header */}
         <Header toggleSidebar={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>
