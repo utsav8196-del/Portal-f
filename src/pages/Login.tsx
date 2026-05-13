@@ -15,7 +15,7 @@ export default function Login() {
     try {
       const response = await api.post('/api/auth/login', { email, password });
       const userRole = response.data.user?.role || 'user';
-      login(userRole); // updates context and localStorage
+      login(userRole);
       Swal.fire('Success', 'Logged in', 'success');
       navigate('/');
     } catch (err: any) {

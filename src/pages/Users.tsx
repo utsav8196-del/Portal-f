@@ -156,16 +156,6 @@ const Users = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-        {/* <button
-          className="inline-flex items-center cursor-pointer px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          onClick={async () => {
-            await fetchCountries();
-            setIsModalOpen(true);
-          }}
-        >
-          <Plus size={16} className="mr-2" />
-          Add User
-        </button> */}
       </div>
 
       <div className="bg-white shadow-sm rounded-lg border border-gray-100 overflow-hidden">
@@ -186,22 +176,6 @@ const Users = () => {
             setCurrentPage(1);
           }}
           loading={loading}
-          // renderActions={(row) => (
-          //   <div className="flex space-x-2 items-center">
-          //     <button
-          //       onClick={() => handleEdit(row)}
-          //       className="text-blue-600 hover:text-blue-900 cursor-pointer"
-          //     >
-          //       <Pencil size={18} />
-          //     </button>
-          //     <button
-          //       onClick={() => handleDelete(row.id)}
-          //       className="text-red-600 hover:text-red-900 cursor-pointer"
-          //     >
-          //       <Trash2 size={18} />
-          //     </button>
-          //   </div>
-          // )}
         />
       </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid,
 } from 'recharts';
@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { Plus, X, Package } from 'lucide-react';
 
-// TypeScript interfaces
 interface Stats {
   totalProjects: number;
   totalWorkers: number;
@@ -44,7 +43,6 @@ export default function Home() {
   const [materialName, setMaterialName] = useState('');
   const [materialSubmitting, setMaterialSubmitting] = useState(false);
 
-  // Cement specific state
   const [cementQuantity, setCementQuantity] = useState<number>(0);
   const [cementLoading, setCementLoading] = useState(true);
 
@@ -52,9 +50,9 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const [statsRes, projectsRes, materialsRes] = await Promise.all([
-          api.get('/api/stats'),
-          api.get('/api/projects'),
-          api.get('/api/materials'),
+          axios.get('/api/stats', { withCredentials: true }),
+          axios.get('/api/projects', { withCredentials: true }),
+          axios.get('/api/materials', { withCredentials: true }),
         ]);
 
         const projectsData = Array.isArray(projectsRes.data) ? projectsRes.data : [];
@@ -66,15 +64,12 @@ export default function Home() {
           completedProjects: completedCount,
         });
 
-        // Process materials to get cement quantity only
         const materialsData = materialsRes.data as Record<string, MaterialEntry[]>;
-        // Find cement entries (case‑insensitive)
         const cementEntries = Object.entries(materialsData).find(
           ([name]) => name.toLowerCase() === 'cement'
         );
         if (cementEntries) {
           const entries = cementEntries[1];
-          // Exclude "Initial Stock" entries
           const realEntries = entries.filter(e => e['Supplier Name'] !== 'Initial Stock');
           const totalQuantity = realEntries.reduce((sum, e) => sum + (e.Quantity || 0), 0);
           setCementQuantity(totalQuantity);
@@ -107,7 +102,7 @@ export default function Home() {
 
     setMaterialSubmitting(true);
     try {
-      await api.post('/api/materials', {
+      await axios.post('/api/materials', {
         materialName: trimmedName,
         projectId,
         entry: {
@@ -119,6 +114,7 @@ export default function Home() {
           Amount: 0,
           Remarks: 'Initial material creation',
         },
+      }, { withCredentials: true });
 
       localStorage.setItem('selectedProjectId', projectId);
       window.dispatchEvent(new Event('storage'));
@@ -126,9 +122,8 @@ export default function Home() {
       setMaterialName('');
       Swal.fire('Success', 'Material added successfully', 'success');
       
-      // Refresh cement quantity after adding material
       setCementLoading(true);
-      const materialsRes = await api.get('/api/materials');
+      const materialsRes = await axios.get('/api/materials', { withCredentials: true });
       const materialsData = materialsRes.data as Record<string, MaterialEntry[]>;
       const cementEntries = Object.entries(materialsData).find(
         ([name]) => name.toLowerCase() === 'cement'
@@ -150,12 +145,10 @@ export default function Home() {
     }
   };
 
-  // Prepare chart data
   const chartData = projects
     .map((p) => ({ name: p.name, progress: p.progress }))
     .sort((a, b) => b.progress - a.progress);
 
-  // Recent projects
   const recentProjects = [...projects]
     .sort((a, b) => (b.createdAt && a.createdAt ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() : 0))
     .slice(0, 5);
@@ -199,7 +192,6 @@ export default function Home() {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Page Header */}
       <div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -217,23 +209,19 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Stats Grid - 4 cards (Average Progress replaced by Cement Unit) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {/* Total Projects */}
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
           <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Projects</h3>
           <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-3">{stats.totalProjects}</p>
           <p className="text-xs text-gray-500 mt-2">All projects</p>
         </div>
 
-        {/* Total Workers */}
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
           <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Workers</h3>
           <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-3">{stats.totalWorkers}</p>
           <p className="text-xs text-gray-500 mt-2">Labour count</p>
         </div>
 
-        {/* Cement Unit (replaces Average Progress) */}
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Cement Unit</h3>
@@ -244,8 +232,6 @@ export default function Home() {
           </p>
           <p className="text-xs text-gray-500 mt-2">Total quantity (units)</p>
         </div>
-
-        {/* Completed Projects */}
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
           <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Completed Projects</h3>
           <p className="text-2xl sm:text-3xl font-bold text-emerald-600 mt-3">{stats.completedProjects}</p>
@@ -253,7 +239,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Chart Section */}
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
         <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Project Progress Overview</h2>
         {projects.length === 0 ? (
@@ -295,7 +280,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Recent Projects Table */}
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-5">
           <h2 className="text-lg sm:text-xl font-bold text-gray-800">Recent Projects</h2>
@@ -357,7 +341,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Add Material Modal */}
       {showAddMaterialModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">

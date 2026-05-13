@@ -10,18 +10,19 @@ export const BASE_API_URL =
   normalizeApiBaseUrl(import.meta.env.VITE_API_URL || "") ||
   (import.meta.env.PROD ? RENDER_API_URL : "");
 
-// Create axios instance
 export const api = axios.create({
   baseURL: BASE_API_URL,
   withCredentials: true,
 });
 
-// Request interceptor
 api.interceptors.request.use(
   (config: any) => {
     const token = Cookies.get("accessToken");
     if (token) {
+<<<<<<< Updated upstream
       config.headers = config.headers || {};
+=======
+>>>>>>> Stashed changes
       config.headers.Authorization = token;
     }
     return config;
@@ -32,7 +33,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
 api.interceptors.response.use(
   (response: AxiosResponse) => {
     return response.data;
@@ -48,15 +48,24 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       try {
+<<<<<<< Updated upstream
         // Your backend currently doesn't expose refresh_token in this repo,
         // but keep the structure so the app won't crash if that endpoint exists later.
         const refreshUrl = BASE_API_URL
           ? `${BASE_API_URL}/api/auth/refresh_token`
           : "/api/auth/refresh_token";
+=======
+        const res = await axios.post(
+          `${BASE_API_URL}/api/auth/refresh_token`,
+          {},
+          { withCredentials: true }
+        );
+>>>>>>> Stashed changes
 
         const res = await axios.post(refreshUrl, {}, { withCredentials: true });
         const newAccessToken = (res as any).data?.accessToken;
 
+<<<<<<< Updated upstream
         if (newAccessToken) {
           Cookies.set("accessToken", newAccessToken);
 
@@ -66,6 +75,12 @@ api.interceptors.response.use(
             Authorization: newAccessToken,
           };
         }
+=======
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: newAccessToken,
+        };
+>>>>>>> Stashed changes
 
         return api(originalRequest);
       } catch (refreshError) {
@@ -82,7 +97,6 @@ api.interceptors.response.use(
   }
 );
 
-// Options interface
 interface Options {
   url: string;
   method: "POST" | "PUT" | "GET" | "PATCH" | "DELETE";
@@ -91,7 +105,6 @@ interface Options {
   headers?: Record<string, string>;
 }
 
-// Generate Axios config
 const requestConfig = (options: Options): AxiosRequestConfig => {
   const config: AxiosRequestConfig = {
     url: options.url,
@@ -104,7 +117,6 @@ const requestConfig = (options: Options): AxiosRequestConfig => {
   return config;
 };
 
-// Request function
 export const request = async (options: Options): Promise<any> => {
   if (!navigator.onLine) {
     return Promise.reject({

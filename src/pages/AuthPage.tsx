@@ -14,7 +14,6 @@ const AuthPage = ({ isRegister = false }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // const token = localStorage.getItem("accessToken");
     const token = Cookies.get("accessToken");
     if (token) {
       navigate("/");
@@ -81,12 +80,7 @@ const AuthPage = ({ isRegister = false }) => {
       } else {
         const response = await login({ username, password });
 
-        // localStorage.setItem("accessToken", response.Access_Token);
         Cookies.set("accessToken", response.Access_Token);
-        // , {
-        //   secure: true,
-        //   sameSite: "Strict",
-        // });
 
         Swal.fire({
           icon: "success",

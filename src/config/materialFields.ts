@@ -1,0 +1,357 @@
+export interface MaterialField {
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'date';
+  required?: boolean;
+  step?: string;
+}
+
+export interface MaterialConfig {
+  displayName: string;
+  fields: MaterialField[];
+  computeAmount: (formData: Record<string, any>) => number;
+  buildEntry: (formData: Record<string, any>, amount: number) => Record<string, any>;
+}
+
+const getNumber = (val: any) => (val === '' || val === undefined ? 0 : Number(val));
+
+export const MATERIALS_CONFIG: Record<string, MaterialConfig> = {
+  Sand: {
+    displayName: 'Sand',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Challan Number', label: 'Challan Number', type: 'text', required: true },
+      { name: 'Vehicle Number', label: 'Vehicle Number', type: 'text', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Weight', label: 'Weight (kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Weight) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Challan Number': form['Challan Number'],
+      'Vehicle Number': form['Vehicle Number'],
+      'Supplier Name': form['Supplier Name'],
+      Weight: getNumber(form.Weight),
+      Rate: getNumber(form.Rate),
+      Quantity: getNumber(form.Weight),  
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Aggregate: {
+    displayName: 'Aggregate',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Challan Number', label: 'Challan Number', type: 'text', required: true },
+      { name: 'Vehicle Number', label: 'Vehicle Number', type: 'text', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Size', label: 'Size (mm)', type: 'text', required: true },
+      { name: 'Weight', label: 'Weight (kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Weight) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Challan Number': form['Challan Number'],
+      'Vehicle Number': form['Vehicle Number'],
+      'Supplier Name': form['Supplier Name'],
+      Size: form.Size,
+      Weight: getNumber(form.Weight),
+      Rate: getNumber(form.Rate),
+      Quantity: getNumber(form.Weight),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Cement: {
+    displayName: 'Cement',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Type', label: 'Type (OPC/PPC)', type: 'text', required: true },
+      { name: 'Grade', label: 'Grade (43/53)', type: 'text', required: true },
+      { name: 'Manufacturer', label: 'Manufacturer', type: 'text', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Bags', label: 'Bags', type: 'number', required: true, step: '1' },
+      { name: 'Rate', label: 'Rate (₹/bag)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Bags) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      Type: form.Type,
+      Grade: form.Grade,
+      Manufacturer: form.Manufacturer,
+      'Supplier Name': form['Supplier Name'],
+      Bags: getNumber(form.Bags),
+      Rate: getNumber(form.Rate),
+      Quantity: getNumber(form.Bags),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Steel: {
+    displayName: 'Steel',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Diameter', label: 'Diameter (mm)', type: 'text', required: true },
+      { name: 'Weight', label: 'Weight (kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Weight) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Diameter: form.Diameter,
+      Weight: getNumber(form.Weight),
+      Rate: getNumber(form.Rate),
+      Quantity: getNumber(form.Weight),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Fabrication: {
+    displayName: 'Fabrication',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Description', label: 'Description', type: 'text', required: true },
+      { name: 'Weight', label: 'Weight (kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Weight) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Description: form.Description,
+      Weight: getNumber(form.Weight),
+      Rate: getNumber(form.Rate),
+      Quantity: getNumber(form.Weight),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Hardware: {
+    displayName: 'Hardware',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Description', label: 'Description', type: 'text', required: true },
+      { name: 'Weight', label: 'Weight (kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/kg)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Weight) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Description: form.Description,
+      Weight: getNumber(form.Weight),
+      Rate: getNumber(form.Rate),
+      Quantity: getNumber(form.Weight),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Bricks: {
+    displayName: 'Bricks',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Challan Number', label: 'Challan Number', type: 'text', required: true },
+      { name: 'Vehicle Number', label: 'Vehicle Number', type: 'text', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity (pcs)', type: 'number', required: true, step: '1' },
+      { name: 'Rate', label: 'Rate (₹/pc)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Challan Number': form['Challan Number'],
+      'Vehicle Number': form['Vehicle Number'],
+      'Supplier Name': form['Supplier Name'],
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Stone: {
+    displayName: 'Stone',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Challan Number', label: 'Challan Number', type: 'text', required: true },
+      { name: 'Vehicle Number', label: 'Vehicle Number', type: 'text', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: '1' },
+      { name: 'Rate', label: 'Rate (₹/unit)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Challan Number': form['Challan Number'],
+      'Vehicle Number': form['Vehicle Number'],
+      'Supplier Name': form['Supplier Name'],
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Tiles: {
+    displayName: 'Tiles',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Size', label: 'Size (e.g., 600x600 mm)', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/unit)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Size: form.Size,
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Granite: {
+    displayName: 'Granite',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Size', label: 'Size (e.g., 8x4 ft)', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/unit)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Size: form.Size,
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Electric: {
+    displayName: 'Electric',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Description', label: 'Description', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Description: form.Description,
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Plumbing: {
+    displayName: 'Plumbing',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Description', label: 'Description', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Description: form.Description,
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Plywood: {
+    displayName: 'Plywood',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Description', label: 'Description', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/unit)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Description: form.Description,
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+  Paint: {
+    displayName: 'Paint',
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Description', label: 'Description', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹/unit)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Description: form.Description,
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  },
+};
+
+export const getMaterialConfig = (materialName: string): MaterialConfig => {
+  const config = MATERIALS_CONFIG[materialName];
+  if (config) return config;
+  return {
+    displayName: materialName,
+    fields: [
+      { name: 'Date', label: 'Date', type: 'date', required: true },
+      { name: 'Supplier Name', label: 'Supplier Name', type: 'text', required: true },
+      { name: 'Quantity', label: 'Quantity', type: 'number', required: true, step: 'any' },
+      { name: 'Rate', label: 'Rate (₹)', type: 'number', required: true, step: 'any' },
+      { name: 'Remarks', label: 'Remarks', type: 'text' },
+    ],
+    computeAmount: (form) => getNumber(form.Quantity) * getNumber(form.Rate),
+    buildEntry: (form, amount) => ({
+      Date: form.Date,
+      'Supplier Name': form['Supplier Name'],
+      Quantity: getNumber(form.Quantity),
+      Rate: getNumber(form.Rate),
+      Amount: amount,
+      Remarks: form.Remarks || '',
+    }),
+  };
+};

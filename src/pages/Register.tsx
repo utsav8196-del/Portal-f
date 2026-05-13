@@ -16,7 +16,7 @@ export default function Register() {
     try {
       const response = await api.post('/api/auth/register', { email, password, name });
       const userRole = response.data.user?.role || 'user';
-      login(userRole); // updates context and localStorage
+      login(userRole); 
       Swal.fire('Success', 'Registered and logged in', 'success');
       navigate('/');
     } catch (err: any) {

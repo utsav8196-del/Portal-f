@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { Plus, X, Package, Hash, Edit, Trash2 } from 'lucide-react';
-import ProjectDropdown from '../components/ProjectDropdown';
-
-interface MaterialEntry {
-  Date: string;
-  'Supplier Name': string;
-  Quantity: number;
-  Amount: number;
-  projectId?: string;
-  projectName?: string;
-  _id: string;
-}
+import { Search, Plus, Edit, Trash2, X, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface MaterialSummary {
   name: string;
@@ -20,54 +10,43 @@ interface MaterialSummary {
 }
 
 export default function Materials() {
-  const [materialSummaries, setMaterialSummaries] = useState<MaterialSummary[]>([]);
+  const navigate = useNavigate();
+  const [materials, setMaterials] = useState<MaterialSummary[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('userRole') || 'user');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
 
-  // New material modal state
-  const [showAddMaterialModal, setShowAddMaterialModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [newMaterialName, setNewMaterialName] = useState('');
-  const [submittingMaterial, setSubmittingMaterial] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Edit material modal state
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<MaterialSummary | null>(null);
-  const [editMaterialName, setEditMaterialName] = useState('');
+  const [editName, setEditName] = useState('');
   const [submittingEdit, setSubmittingEdit] = useState(false);
 
-  // Add record modal state
-  const [showAddRecordModal, setShowAddRecordModal] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<MaterialSummary | null>(null);
-  const [submittingRecord, setSubmittingRecord] = useState(false);
-  const [recordForm, setRecordForm] = useState({
-    projectId: '',
-    Date: new Date().toISOString().split('T')[0],
-    supplierName: '',
-    quantity: '',
-    rate: '',
-    remarks: '',
-  });
-
-  // Fetch materials
   const fetchMaterials = async () => {
     setLoading(true);
-    setError(null);
     try {
+<<<<<<< Updated upstream
       const res = await api.get<Record<string, MaterialEntry[]>>('/api/materials');
       const data = res.data;
 
       const summaries: MaterialSummary[] = Object.entries(data).map(([name, entries]) => {
+=======
+      const res = await axios.get('/api/materials', { withCredentials: true });
+      const data = res.data; 
+      const summaries: MaterialSummary[] = Object.entries(data).map(([name, entries]: [string, any[]]) => {
+>>>>>>> Stashed changes
         const realEntries = entries.filter((e) => e['Supplier Name'] !== 'Initial Stock');
-        return {
-          name,
-          totalRecords: realEntries.length,
-        };
+        return { name, totalRecords: realEntries.length };
       });
       summaries.sort((a, b) => a.name.localeCompare(b.name));
-      setMaterialSummaries(summaries);
-    } catch (err: any) {
-      console.error('Failed to load materials:', err);
-      setError(err?.response?.data?.message || 'Unable to load materials.');
+      setMaterials(summaries);
+    } catch (err) {
+      Swal.fire('Error', 'Failed to load materials', 'error');
     } finally {
       setLoading(false);
     }
@@ -75,12 +54,26 @@ export default function Materials() {
 
   useEffect(() => {
     fetchMaterials();
+    const handleStorageChange = () => setUserRole(localStorage.getItem('userRole') || 'user');
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Add new material category
+  const filteredMaterials = materials.filter((m) =>
+    m.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, entriesPerPage]);
+
+  const totalEntries = filteredMaterials.length;
+  const totalPages = Math.ceil(totalEntries / entriesPerPage);
+  const startIndex = (currentPage - 1) * entriesPerPage;
+  const paginatedMaterials = filteredMaterials.slice(startIndex, startIndex + entriesPerPage);
+
   const handleAddMaterial = async () => {
-    const trimmedName = newMaterialName.trim();
-    if (!trimmedName) {
+    const trimmed = newMaterialName.trim();
+    if (!trimmed) {
       Swal.fire('Validation Error', 'Material name is required', 'warning');
       return;
     }
@@ -102,12 +95,12 @@ export default function Materials() {
       }
     }
 
-    setSubmittingMaterial(true);
+    setSubmitting(true);
     try {
       await api.post(
         '/api/materials',
         {
-          materialName: trimmedName,
+          materialName: trimmed,
           projectId,
           entry: {
             projectId,
@@ -120,26 +113,25 @@ export default function Materials() {
           },
         }
       );
-      Swal.fire('Success', `Material "${trimmedName}" added.`, 'success');
-      setShowAddMaterialModal(false);
+      Swal.fire('Success', `Material "${trimmed}" added.`, 'success');
+      setShowAddModal(false);
       setNewMaterialName('');
       fetchMaterials();
     } catch (err: any) {
       Swal.fire('Error', err.response?.data?.message || 'Failed to add material', 'error');
     } finally {
-      setSubmittingMaterial(false);
+      setSubmitting(false);
     }
   };
 
-  // Edit material
   const openEditModal = (material: MaterialSummary) => {
     setEditingMaterial(material);
-    setEditMaterialName(material.name);
+    setEditName(material.name);
     setShowEditModal(true);
   };
 
   const handleEditMaterial = async () => {
-    const newName = editMaterialName.trim();
+    const newName = editName.trim();
     if (!newName) {
       Swal.fire('Validation Error', 'Material name cannot be empty', 'warning');
       return;
@@ -166,7 +158,6 @@ export default function Materials() {
     }
   };
 
-  // Delete material
   const handleDeleteMaterial = async (material: MaterialSummary) => {
     const confirm = await Swal.fire({
       title: `Delete "${material.name}"?`,
@@ -187,6 +178,7 @@ export default function Materials() {
     }
   };
 
+<<<<<<< Updated upstream
   // Add record for material
   const openAddRecordModal = (material: MaterialSummary) => {
     setSelectedMaterial(material);
@@ -240,6 +232,10 @@ export default function Materials() {
     } finally {
       setSubmittingRecord(false);
     }
+=======
+  const viewMaterialDetails = (materialName: string) => {
+    navigate(`/material/${encodeURIComponent(materialName)}`);
+>>>>>>> Stashed changes
   };
 
   if (loading) {
@@ -250,100 +246,145 @@ export default function Materials() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <p className="text-red-600">{error}</p>
-        <button onClick={fetchMaterials} className="mt-4 bg-red-600 text-white px-4 py-2 rounded">
-          Retry
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Materials</h1>
-        <button
-          onClick={() => setShowAddMaterialModal(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm"
-        >
-          <Plus size={18} />
-          New Material
-        </button>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Materials</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage all construction materials</p>
+          </div>
+          {userRole === 'admin' && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition w-full sm:w-auto"
+            >
+              <Plus size={18} /> New Material
+            </button>
+          )}
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Show</span>
+              <select
+                className="border rounded px-3 py-1.5 bg-white"
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span>entries</span>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search material..."
+                className="w-full border rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <div className="inline-block min-w-full align-middle">
+              <div className="max-h-96 overflow-y-auto">
+                <table className="w-full table-auto text-sm border-collapse">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-200 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 sm:px-6 py-3 text-left">SR. NO.</th>
+                      <th className="px-4 sm:px-6 py-3 text-left">Material Name</th>
+                      <th className="px-4 sm:px-6 py-3 text-left">Total Records</th>
+                      {userRole === 'admin' && <th className="px-4 sm:px-6 py-3 text-right">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {paginatedMaterials.length === 0 ? (
+                      <tr>
+                        <td colSpan={userRole === 'admin' ? 4 : 3} className="text-center py-16 text-gray-400">
+                          No materials found.
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedMaterials.map((material, idx) => (
+                        <tr key={material.name} className="hover:bg-gray-50 transition">
+                          <td className="px-4 sm:px-6 py-3 font-medium text-gray-500 whitespace-nowrap">
+                            {startIndex + idx + 1}
+                          </td>
+                          <td className="px-4 sm:px-6 py-3">
+                            <button
+                              onClick={() => viewMaterialDetails(material.name)}
+                              className="text-blue-600 hover:underline font-medium text-left"
+                            >
+                              {material.name}
+                            </button>
+                          </td>
+                          <td className="px-4 sm:px-6 py-3 text-gray-700">{material.totalRecords}</td>
+                          {userRole === 'admin' && (
+                            <td className="px-4 sm:px-6 py-3 text-right whitespace-nowrap">
+                              <button
+                                onClick={() => openEditModal(material)}
+                                className="text-blue-600 hover:text-blue-800 mr-2"
+                                title="Edit material"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMaterial(material)}
+                                className="text-red-600 hover:text-red-800"
+                                title="Delete material"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {totalEntries > 0 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-t border-gray-200 text-sm text-gray-500 bg-gray-50">
+              <div>
+                Showing {startIndex + 1} to {Math.min(startIndex + entriesPerPage, totalEntries)} of {totalEntries} results
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="border px-2 py-1 rounded disabled:opacity-50 bg-white hover:bg-gray-100"
+                >
+                  ‹
+                </button>
+                <span className="px-3 py-1 bg-blue-600 text-white rounded">{currentPage}</span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="border px-2 py-1 rounded disabled:opacity-50 bg-white hover:bg-gray-100"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Material Cards Grid */}
-      {materialSummaries.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-          <Package size={48} className="mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-500">No materials found</p>
-          <p className="text-gray-400 text-sm mt-1">Click "New Material" to create one.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {materialSummaries.map((material) => (
-            <div
-              key={material.name}
-              className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition p-5 flex flex-col"
-            >
-              {/* Material name and icons row */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <Package size={20} className="text-blue-500" />
-                  </div>
-                  <h3 className="font-semibold text-gray-800 text-lg truncate">
-                    {material.name}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-1 ml-2">
-                  <button
-                    onClick={() => openEditModal(material)}
-                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                    title="Edit material"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteMaterial(material)}
-                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                    title="Delete material"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Total Records */}
-              <div className="flex items-center justify-between text-sm mb-4">
-                <span className="text-gray-500 flex items-center gap-1">
-                  <Hash size={14} /> Total Records
-                </span>
-                <span className="font-medium text-gray-700">{material.totalRecords}</span>
-              </div>
-
-              {/* Add Record Button */}
-              <button
-                onClick={() => openAddRecordModal(material)}
-                className="mt-auto w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg transition"
-              >
-                <Plus size={16} />
-                Add Record
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* New Material Modal */}
-      {showAddMaterialModal && (
+      {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
             <button
-              onClick={() => setShowAddMaterialModal(false)}
+              onClick={() => setShowAddModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
               <X size={24} />
@@ -364,22 +405,24 @@ export default function Materials() {
               />
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowAddMaterialModal(false)} className="border px-4 py-2 rounded-lg">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="border px-4 py-2 rounded-lg"
+              >
                 Cancel
               </button>
               <button
                 onClick={handleAddMaterial}
-                disabled={submittingMaterial}
+                disabled={submitting}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
               >
-                {submittingMaterial ? 'Adding...' : 'Add Material'}
+                {submitting ? 'Adding...' : 'Add Material'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Material Modal */}
       {showEditModal && editingMaterial && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
@@ -396,16 +439,18 @@ export default function Materials() {
               </label>
               <input
                 type="text"
-                value={editMaterialName}
-                onChange={(e) => setEditMaterialName(e.target.value)}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleEditMaterial()}
-                placeholder="Material name"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
               />
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowEditModal(false)} className="border px-4 py-2 rounded-lg">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="border px-4 py-2 rounded-lg"
+              >
                 Cancel
               </button>
               <button
@@ -414,96 +459,6 @@ export default function Materials() {
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
               >
                 {submittingEdit ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Record Modal */}
-      {showAddRecordModal && selectedMaterial && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-            <button
-              onClick={() => setShowAddRecordModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <X size={24} />
-            </button>
-            <h2 className="text-xl font-bold mb-4">Add Transaction for {selectedMaterial.name}</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Project Name *</label>
-                <ProjectDropdown
-                  value={recordForm.projectId}
-                  onChange={(pid) => setRecordForm({ ...recordForm, projectId: pid })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Date *</label>
-                <input
-                  type="date"
-                  value={recordForm.Date}
-                  onChange={(e) => setRecordForm({ ...recordForm, Date: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Supplier Name *</label>
-                <input
-                  type="text"
-                  value={recordForm.supplierName}
-                  onChange={(e) => setRecordForm({ ...recordForm, supplierName: e.target.value })}
-                  placeholder="e.g., ABC Traders"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-gray-700">Quantity *</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={recordForm.quantity}
-                    onChange={(e) => setRecordForm({ ...recordForm, quantity: e.target.value })}
-                    placeholder="e.g., 100"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-gray-700">Rate (₹) *</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={recordForm.rate}
-                    onChange={(e) => setRecordForm({ ...recordForm, rate: e.target.value })}
-                    placeholder="e.g., 500"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Remarks</label>
-                <textarea
-                  rows={2}
-                  value={recordForm.remarks}
-                  onChange={(e) => setRecordForm({ ...recordForm, remarks: e.target.value })}
-                  placeholder="Optional"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowAddRecordModal(false)} className="border px-4 py-2 rounded-lg">
-                Cancel
-              </button>
-              <button
-                onClick={handleAddRecord}
-                disabled={submittingRecord}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-              >
-                {submittingRecord ? 'Adding...' : 'Add Record'}
               </button>
             </div>
           </div>

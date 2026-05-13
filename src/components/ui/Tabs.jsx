@@ -5,7 +5,6 @@ export default function Tabs({ tabs }) {
 
   return (
     <div>
-      {/* Tab Buttons */}
       <div className="flex border-b mb-4">
         {tabs.map((tab, index) => (
           <button
@@ -21,8 +20,6 @@ export default function Tabs({ tabs }) {
           </button>
         ))}
       </div>
-
-      {/* Tab Content */}
       <div>{tabs[active]?.content}</div>
     </div>
   );

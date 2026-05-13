@@ -5,7 +5,6 @@ import Register from './pages/Register';
 import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
-import Materials from './pages/Material';
 import Labour from './pages/Labour';
 import Machinery from './pages/Machinery';
 import Settings from './pages/Settings';
@@ -25,7 +24,6 @@ function AppRoutes() {
       <Route element={isAuth ? <DashboardLayout /> : <Navigate to="/login" />}>
         <Route path="/" element={<Home />} />
         <Route path="/projects" element={<Projects />} />
-        <Route path="/materials" element={<Materials />} />
         <Route path="/labour" element={<Labour />} />
         <Route path="/machinery" element={<Machinery />} />
         <Route path="/settings" element={<Settings />} />

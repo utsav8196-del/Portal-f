@@ -5,7 +5,6 @@ import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-// ─── Tab Component (inline, no external dependency) ──────────────────────────
 const Tabs = ({
   tabs,
   activeTab,
@@ -34,7 +33,6 @@ const Tabs = ({
   </div>
 );
 
-// ─── Password Input Helper ────────────────────────────────────────────────────
 const PasswordInput = ({
   id,
   label,
@@ -79,7 +77,6 @@ const PasswordInput = ({
   );
 };
 
-// ─── Profile Avatar ───────────────────────────────────────────────────────────
 const Avatar = ({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) => {
   const initials = name
     .split(" ")
@@ -105,7 +102,6 @@ const Avatar = ({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) => 
   );
 };
 
-// ─── Detail Row ───────────────────────────────────────────────────────────────
 const DetailRow = ({
   icon,
   label,
@@ -124,11 +120,8 @@ const DetailRow = ({
   </div>
 );
 
-// ─── Main Settings Component ──────────────────────────────────────────────────
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
-
-  // Profile
   const [profile, setProfile] = useState<{
     name: string;
     email: string;
@@ -138,13 +131,11 @@ const Settings = () => {
   } | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  // Password
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // General settings
   const [siteName, setSiteName] = useState("");
   const [siteDescription, setSiteDescription] = useState("");
   const [timezone, setTimezone] = useState("");
@@ -154,7 +145,6 @@ const Settings = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  // Load profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -169,7 +159,6 @@ const Settings = () => {
     fetchProfile();
   }, []);
 
-  // Load general settings
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -186,7 +175,6 @@ const Settings = () => {
     loadSettings();
   }, []);
 
-  // ── Password Change ──────────────────────────────────────────────────────────
   const handlePasswordChange = async () => {
     if (!oldPassword || !newPassword || !confirmNewPassword) {
       Swal.fire({ icon: "warning", title: "Missing Fields", text: "Please fill in all password fields." });
@@ -226,7 +214,6 @@ const Settings = () => {
     }
   };
 
-  // ── General Settings Update ──────────────────────────────────────────────────
   const handleGeneralUpdate = async () => {
     setIsUpdatingGeneral(true);
     try {
@@ -239,7 +226,6 @@ const Settings = () => {
     }
   };
 
-  // ── Cancel ───────────────────────────────────────────────────────────────────
   const handleCancel = () => {
     setOldPassword(""); setNewPassword(""); setConfirmNewPassword("");
     api.get("/api/settings").then(({ data }) => {
@@ -249,27 +235,23 @@ const Settings = () => {
     }).catch(() => {});
   };
 
-  // ── Save dispatcher ──────────────────────────────────────────────────────────
   const handleSave = () => {
     if (activeTab === "security") handlePasswordChange();
     else if (activeTab === "general") handleGeneralUpdate();
   };
 
-  // ── Tab definitions ──────────────────────────────────────────────────────────
   const tabDefs = [
     { id: "profile",  label: "Profile",  icon: <User size={15} /> },
     { id: "security", label: "Security", icon: <Shield size={15} /> },
     { id: "general",  label: "General",  icon: <Settings2 size={15} /> },
   ];
 
-  // ── Profile Tab ──────────────────────────────────────────────────────────────
   const profileTab = profileLoading ? (
     <div className="flex justify-center items-center h-40">
       <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </div>
   ) : profile ? (
     <div className="space-y-6">
-      {/* Avatar + name card */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
         <div className="relative shrink-0">
           <Avatar name={profile.name || profile.email} size="lg" />
@@ -287,7 +269,6 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Detail rows */}
       <div className="bg-white border border-gray-100 rounded-xl px-4 divide-y divide-gray-100 shadow-sm">
         <DetailRow icon={<User size={16} />}     label="Full Name"   value={profile.name} />
         <DetailRow icon={<Mail size={16} />}     label="Email"       value={profile.email} />
@@ -310,7 +291,6 @@ const Settings = () => {
     <p className="text-gray-500 text-sm">Could not load profile.</p>
   );
 
-  // ── Security Tab ─────────────────────────────────────────────────────────────
   const securityTab = (
     <div className="space-y-5 max-w-lg">
       <div className="flex items-center gap-2 text-sm text-gray-500 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
@@ -341,7 +321,6 @@ const Settings = () => {
         placeholder="Re-enter new password"
       />
 
-      {/* strength indicator */}
       {newPassword.length > 0 && (
         <div className="space-y-1">
           <p className="text-xs text-gray-500 font-medium">Password strength</p>
@@ -373,7 +352,6 @@ const Settings = () => {
     </div>
   );
 
-  // ── General Tab ──────────────────────────────────────────────────────────────
   const generalTab = settingsLoading ? (
     <div className="flex justify-center items-center h-40">
       <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -440,21 +418,16 @@ const Settings = () => {
 
   return (
     <div className="space-y-6 p-4 sm:p-6 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Settings</h1>
       </div>
 
-      {/* Card */}
       <div className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
         <div className="p-5 sm:p-7">
-          {/* Tabs */}
           <Tabs tabs={tabDefs} activeTab={activeTab} onChange={setActiveTab} />
 
-          {/* Tab content */}
           <div className="min-h-[260px]">{tabContent[activeTab]}</div>
 
-          {/* Footer actions — only for editable tabs */}
           {showFooter && (
             <div className="pt-5 mt-6 border-t border-gray-100">
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">

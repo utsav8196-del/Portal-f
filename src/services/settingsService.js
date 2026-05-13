@@ -1,4 +1,4 @@
-import api from './api'; // your axios instance with baseURL and withCredentials
+import api from './api'; 
 
 export const getSettings = async () => {
     const response = await api.get('/api/settings');

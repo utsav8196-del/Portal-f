@@ -24,12 +24,9 @@ export default function MachineryDetail() {
   const [sortOrder, setSortOrder] = useState('latest');
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
 
-  // Form state
   const [recordForm, setRecordForm] = useState({
     projectId: '',
     date: new Date().toISOString().split('T')[0],
@@ -73,7 +70,6 @@ export default function MachineryDetail() {
     return isNaN(date.getTime()) ? new Date(0) : date;
   };
 
-  // Sort entries
   const sortedEntries = useMemo(() => {
     const sorted = [...allEntries];
     sorted.sort((a, b) => {
@@ -84,7 +80,6 @@ export default function MachineryDetail() {
     return sorted;
   }, [allEntries, sortOrder]);
 
-  // Pagination
   const totalEntries = sortedEntries.length;
   const totalPages = Math.ceil(totalEntries / entriesPerPage);
   const startIndex = (currentPage - 1) * entriesPerPage;
@@ -94,7 +89,6 @@ export default function MachineryDetail() {
     setCurrentPage(1);
   }, [entriesPerPage]);
 
-  // Summary
   const summary = useMemo(() => {
     const totalEntriesCount = sortedEntries.length;
     const totalQuantity = sortedEntries.reduce((sum, e) => sum + (Number(e.quantity) || 0), 0);
@@ -175,7 +169,7 @@ export default function MachineryDetail() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
         <p className="text-red-600">{error}</p>
-        <Link to="/machinery" className="mt-4 inline-block text-blue-600 hover:underline">
+        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">
           ← Back to Machinery
         </Link>
       </div>
@@ -184,7 +178,6 @@ export default function MachineryDetail() {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link to="/machinery" className="p-2 rounded-full hover:bg-gray-100 transition">
@@ -204,7 +197,6 @@ export default function MachineryDetail() {
         </button>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100">
           <div className="flex items-center justify-between">
@@ -229,9 +221,7 @@ export default function MachineryDetail() {
         </div>
       </div>
 
-      {/* Usage History Table */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        {/* Top bar with entries per page and result summary */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>Show</span>
@@ -310,7 +300,6 @@ export default function MachineryDetail() {
           )}
         </div>
 
-        {/* Pagination */}
         {totalEntries > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-t border-gray-200 text-sm text-gray-500 bg-gray-50">
             <div>
@@ -337,7 +326,6 @@ export default function MachineryDetail() {
         )}
       </div>
 
-      {/* Add Record Modal (unchanged) */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">

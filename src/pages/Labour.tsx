@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
+import axios from 'axios';
 import Swal from 'sweetalert2';
 import { Search, Plus, Edit, Trash2, X } from 'lucide-react';
 import ProjectDropdown from '../components/ProjectDropdown';
@@ -8,57 +8,41 @@ interface Worker {
   _id?: string;
   name: string;
   role: string;
-  projectId?: string | { _id: string; name: string } | null;
-  project: string | { _id: string; name: string } | null;
+  projectId?: { _id: string; name: string } | string | null;
   hourlyRate: number;
-}
-
-interface Project {
-  _id: string;
-  name: string;
 }
 
 export default function Labour() {
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState(() => localStorage.getItem('selectedProjectId') || '');
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('userRole') || 'user');
 
-  // Role from localStorage
-  const [userRole, setUserRole] = useState<string>(() => {
-    return localStorage.getItem('userRole') || 'user';
-  });
-
-  const [form, setForm] = useState<Worker>({
+  const [form, setForm] = useState({
     name: '',
     role: '',
     projectId: '',
-    project: '',
     hourlyRate: 0,
   });
 
   const fetchData = async () => {
     try {
-      const [workersRes, projectsRes] = await Promise.all([
-        api.get('/api/labour', {
-          params: selectedProjectId ? { projectId: selectedProjectId } : {},
-        }),
-        api.get('/api/projects'),
-      ]);
+      const workersRes = await axios.get('/api/labour', {
+        withCredentials: true,
+        params: selectedProjectId ? { projectId: selectedProjectId } : {},
+      });
       setWorkers(workersRes.data);
-      setProjects(projectsRes.data);
     } catch (err) {
-      Swal.fire('Error', 'Failed to load data', 'error');
+      Swal.fire('Error', 'Failed to load workers', 'error');
     }
   };
 
   useEffect(() => {
     fetchData();
-    // Listen for role changes across tabs
     const handleStorageChange = () => {
       setUserRole(localStorage.getItem('userRole') || 'user');
     };
@@ -71,28 +55,28 @@ export default function Labour() {
     localStorage.setItem('selectedProjectId', projectId);
   };
 
-  const getProjectNameForWorker = (worker: Worker): string => {
-    if (worker.projectId && typeof worker.projectId === 'object') return worker.projectId.name;
-    if (!worker.project && !worker.projectId) return '';
-    if (typeof worker.project === 'object') return worker.project.name;
-    const found = projects.find(p => p._id === (worker.projectId || worker.project));
-    return found ? found.name : '';
+  const getProjectName = (worker: Worker): string => {
+    if (!worker.projectId) return '-';
+    if (typeof worker.projectId === 'object' && worker.projectId.name) {
+      return worker.projectId.name;
+    }
+    return 'Unknown';
   };
 
   const filteredWorkers = workers.filter(worker => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
-    const projectName = getProjectNameForWorker(worker);
+    const projectName = getProjectName(worker);
     return (
       worker.name.toLowerCase().includes(term) ||
-      worker.role.toLowerCase().includes(term) ||
+      (worker.role && worker.role.toLowerCase().includes(term)) ||
       projectName.toLowerCase().includes(term)
     );
   });
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, entriesPerPage]);
+  }, [searchTerm, entriesPerPage, selectedProjectId]);
 
   const totalEntries = filteredWorkers.length;
   const totalPages = Math.ceil(totalEntries / entriesPerPage);
@@ -100,7 +84,7 @@ export default function Labour() {
   const paginatedWorkers = filteredWorkers.slice(startIndex, startIndex + entriesPerPage);
 
   const resetForm = () => {
-    setForm({ name: '', role: '', projectId: selectedProjectId, project: selectedProjectId, hourlyRate: 0 });
+    setForm({ name: '', role: '', projectId: selectedProjectId, hourlyRate: 0 });
     setEditingId(null);
   };
 
@@ -110,16 +94,15 @@ export default function Labour() {
   };
 
   const openEditModal = (worker: Worker) => {
-    const projectId = typeof worker.project === 'object' && worker.project !== null
-      ? worker.project._id
-      : typeof worker.projectId === 'object' && worker.projectId !== null
-        ? worker.projectId._id
-        : worker.projectId || worker.project || '';
+    const projectId = typeof worker.projectId === 'object' && worker.projectId?._id
+      ? worker.projectId._id
+      : typeof worker.projectId === 'string'
+      ? worker.projectId
+      : '';
     setForm({
       name: worker.name,
       role: worker.role || '',
       projectId,
-      project: projectId,
       hourlyRate: worker.hourlyRate || 0,
     });
     setEditingId(worker._id || null);
@@ -132,14 +115,16 @@ export default function Labour() {
       Swal.fire('Validation Error', 'Name is required', 'warning');
       return;
     }
-    if (!form.projectId && !form.project) {
+    if (!form.projectId) {
       Swal.fire('Validation Error', 'Project is required', 'warning');
       return;
     }
     try {
       if (editingId) {
-        await api.put(`/api/labour/${editingId}`, { ...form, projectId: form.projectId || form.project });
-        await api.post('/api/labour', { ...form, projectId: form.projectId || form.project });
+        await axios.put(`/api/labour/${editingId}`, form, { withCredentials: true });
+        Swal.fire('Success', 'Worker updated', 'success');
+      } else {
+        await axios.post('/api/labour', form, { withCredentials: true });
         Swal.fire('Success', 'Worker added', 'success');
       }
       setShowModal(false);
@@ -161,7 +146,7 @@ export default function Labour() {
     });
     if (confirm.isConfirmed) {
       try {
-        await api.delete(`/api/labour/${id}`);
+        await axios.delete(`/api/labour/${id}`, { withCredentials: true });
         Swal.fire('Deleted', 'Worker has been removed', 'success');
         fetchData();
       } catch (err: any) {
@@ -170,18 +155,9 @@ export default function Labour() {
     }
   };
 
-  const getProjectName = (worker: Worker): string => {
-    if (worker.projectId && typeof worker.projectId === 'object') return worker.projectId.name;
-    if (!worker.project && !worker.projectId) return '-';
-    if (typeof worker.project === 'object') return worker.project.name;
-    const found = projects.find(p => p._id === (worker.projectId || worker.project));
-    return found ? found.name : 'Unknown';
-  };
-
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Labour Management</h1>
@@ -197,13 +173,33 @@ export default function Labour() {
           )}
         </div>
 
-        {/* Main Card */}
+        <div className="bg-white rounded-xl shadow-md p-4">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div className="w-full md:w-64">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Filter by Project</label>
+              <ProjectDropdown value={selectedProjectId} onChange={handleProjectFilterChange} />
+            </div>
+            <div className="w-full md:w-64">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Search Worker</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Name, role or project..."
+                  className="w-full border rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="bg-white rounded-xl shadow-md">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="whitespace-nowrap">Show</span>
+              <span>Show</span>
               <select
-                className="border rounded px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                className="border rounded px-3 py-1.5 bg-white"
                 value={entriesPerPage}
                 onChange={(e) => setEntriesPerPage(Number(e.target.value))}
               >
@@ -212,22 +208,8 @@ export default function Labour() {
                 <option value={20}>20</option>
                 <option value={50}>50</option>
               </select>
-              <span className="whitespace-nowrap">entries</span>
+              <span>entries</span>
             </div>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search worker..."
-                className="w-full border rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="p-4 border-b border-gray-200 bg-white">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Project</label>
-            <ProjectDropdown value={selectedProjectId} onChange={handleProjectFilterChange} />
           </div>
 
           <div className="overflow-x-auto">
@@ -311,7 +293,6 @@ export default function Labour() {
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto relative">
@@ -350,8 +331,8 @@ export default function Labour() {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Project *</label>
                   <ProjectDropdown
-                    value={(form.projectId || form.project || '') as string}
-                    onChange={(projectId) => setForm({ ...form, projectId, project: projectId })}
+                    value={form.projectId}
+                    onChange={(projectId) => setForm({ ...form, projectId })}
                     required
                   />
                 </div>
@@ -359,11 +340,11 @@ export default function Labour() {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Hourly Rate (₹)</label>
                   <input
                     type="number"
-                    step="0.01"
-                    placeholder="0.00"
+                    step="1"
+                    placeholder="0"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                     value={form.hourlyRate}
-                    onChange={(e) => setForm({ ...form, hourlyRate: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setForm({ ...form, hourlyRate: parseFloat(e.target.value) })}
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">

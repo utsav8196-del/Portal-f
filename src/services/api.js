@@ -10,8 +10,8 @@ const baseURL =
   baseFromEnv || (import.meta.env.PROD ? RENDER_API_URL : '');
 
 const api = axios.create({
-  baseURL,
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_API_URL,   
+  withCredentials: true,                   
 });
 
 export default api;

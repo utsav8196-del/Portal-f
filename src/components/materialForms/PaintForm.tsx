@@ -1,0 +1,41 @@
+import { useState } from 'react';
+import { MaterialFormProps } from './types';
+
+export default function PaintForm({ initialData = {}, onSubmit, onCancel, isSubmitting }: MaterialFormProps) {
+  const [form, setForm] = useState({
+    Date: initialData.Date || new Date().toISOString().split('T')[0],
+    'Supplier Name': initialData['Supplier Name'] || '',
+    Description: initialData.Description || '',
+    Quantity: initialData.Quantity || '',
+    Rate: initialData.Rate || '',
+    Remarks: initialData.Remarks || '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const quantity = parseFloat(form.Quantity);
+    const rate = parseFloat(form.Rate);
+    if (!form.Date || !form['Supplier Name'] || !form.Description || !quantity || !rate) {
+      alert('Please fill all required fields');
+      return;
+    }
+    const amount = quantity * rate;
+    onSubmit({ ...form, Quantity: quantity, Rate: rate, Amount: amount });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div><label className="block text-sm font-semibold">Date *</label><input type="date" name="Date" value={form.Date} onChange={handleChange} required className="w-full border rounded px-3 py-2" /></div>
+      <div><label className="block text-sm font-semibold">Supplier Name *</label><input type="text" name="Supplier Name" value={form['Supplier Name']} onChange={handleChange} required className="w-full border rounded px-3 py-2" /></div>
+      <div><label className="block text-sm font-semibold">Description *</label><input type="text" name="Description" value={form.Description} onChange={handleChange} required className="w-full border rounded px-3 py-2" /></div>
+      <div><label className="block text-sm font-semibold">Quantity *</label><input type="number" step="any" name="Quantity" value={form.Quantity} onChange={handleChange} required className="w-full border rounded px-3 py-2" /></div>
+      <div><label className="block text-sm font-semibold">Rate (₹/unit) *</label><input type="number" step="any" name="Rate" value={form.Rate} onChange={handleChange} required className="w-full border rounded px-3 py-2" /></div>
+      <div><label className="block text-sm font-semibold">Remarks</label><textarea name="Remarks" value={form.Remarks} onChange={handleChange} rows={2} className="w-full border rounded px-3 py-2" /></div>
+      <div className="flex justify-end gap-3"><button type="button" onClick={onCancel} className="border px-4 py-2 rounded">Cancel</button><button type="submit" disabled={isSubmitting} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button></div>
+    </form>
+  );
+}
