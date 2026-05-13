@@ -1,20 +1,27 @@
 import axios, { AxiosError, AxiosResponse, AxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
+import { normalizeApiBaseUrl } from "../apiBaseUrl";
 
-export const BASE_API_URL = "http://localhost:5001";
+const RENDER_API_URL = "https://portal-b-qhir.onrender.com";
+
+// In dev, leave empty so Vite proxy can handle `/api`.
+// In production, fall back to Render API if env var is missing.
+export const BASE_API_URL =
+  normalizeApiBaseUrl(import.meta.env.VITE_API_URL || "") ||
+  (import.meta.env.PROD ? RENDER_API_URL : "");
 
 // Create axios instance
 export const api = axios.create({
   baseURL: BASE_API_URL,
+  withCredentials: true,
 });
 
 // Request interceptor
 api.interceptors.request.use(
   (config: any) => {
     const token = Cookies.get("accessToken");
-    // const token = localStorage.getItem("accessToken");
     if (token) {
-      // config.headers.Authorization = `Bearer ${token}`;
+      config.headers = config.headers || {};
       config.headers.Authorization = token;
     }
     return config;
@@ -41,22 +48,24 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       try {
-        // Call refresh endpoint (assumes your server reads refresh token from HTTP-only cookie)
-        const res = await axios.post(
-          `${BASE_API_URL}/api/auth/refresh_token`,
-          {},
-          { withCredentials: true }
-        );
+        // Your backend currently doesn't expose refresh_token in this repo,
+        // but keep the structure so the app won't crash if that endpoint exists later.
+        const refreshUrl = BASE_API_URL
+          ? `${BASE_API_URL}/api/auth/refresh_token`
+          : "/api/auth/refresh_token";
 
-        const newAccessToken = res.data.accessToken;
-        Cookies.set("accessToken", newAccessToken);
-        console.log("Access token refreshed successfully", newAccessToken);
+        const res = await axios.post(refreshUrl, {}, { withCredentials: true });
+        const newAccessToken = (res as any).data?.accessToken;
 
-        // Update the header and retry original request
-        originalRequest.headers = {
-          ...originalRequest.headers,
-          Authorization: newAccessToken,
-        };
+        if (newAccessToken) {
+          Cookies.set("accessToken", newAccessToken);
+
+          // Update the header and retry original request
+          originalRequest.headers = {
+            ...(originalRequest.headers || {}),
+            Authorization: newAccessToken,
+          };
+        }
 
         return api(originalRequest);
       } catch (refreshError) {
